@@ -1,17 +1,35 @@
-var bodyParser = require('body-parser')
-var express = require('express')
+var express = require("express");
+var bodyParser = require("body-parser");
 var methodOverride = require('method-override')
-var app = express()
 
-// NOTE: when using req.body, you must fully parse the request body
-//       before you call methodOverride() in your middleware stack,
-//       otherwise req.body will not be populated.
-app.use(bodyParser.urlencoded())
-app.use(methodOverride(function (req, res) {
-  if (req.body && typeof req.body === 'object' && '_method' in req.body) {
-    // look in urlencoded POST bodies and delete it
-    var method = req.body._method
-    delete req.body._method
-    return method
-  }
-}))
+var PORT = process.env.PORT || 3000;
+
+var app = express();
+
+// Serve static content for the app from the "public" directory in the application directory.
+app.use(express.static("public"));
+
+// parse application/x-www-form-urlencoded
+app.use(bodyParser.urlencoded({ extended: false }));
+
+// parse application/json
+app.use(bodyParser.json());
+
+
+// override with POST having ?_method=DELETE
+app.use(methodOverride('_method'))
+
+// Set Handlebars.
+var exphbs = require("express-handlebars");
+
+app.engine("handlebars", exphbs({ defaultLayout: "main" }));
+app.set("view engine", "handlebars");
+
+// Import routes and give the server access to them.
+var routes = require("./controllers/burgers_controller.js");
+
+app.use(routes);
+
+app.listen(PORT, function() {
+  console.log("App now listening at localhost:" + PORT);
+});
